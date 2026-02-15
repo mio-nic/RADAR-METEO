@@ -45,8 +45,7 @@ def update_radar():
             df = gpd.GeoDataFrame.from_features(list(results))
             if not df.empty:
                 df.crs = src.crs
-                # Ritaglio Veneto (Bounding box approssimativo)
-                veneto = df.cx[10.5:13.1, 44.7:46.7]
+                
                 
                 if not os.path.exists('data'):
                     os.makedirs('data')
