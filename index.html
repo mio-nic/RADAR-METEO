@@ -75,9 +75,9 @@
     // Inizializzazione mappa con stile Dark (CartoDB Dark Matter)
     var map = L.map('map').setView([45.45, 11.9], 8);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO'
-    }).addTo(map);
+var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
     // Funzione per definire il colore in base all'intensità (mm/h)
 function getColor(d) {
@@ -115,6 +115,11 @@ function style(feature) {
                     layer.bindPopup("Intensità: " + feature.properties.mm + " mm/h");
                 }
             }).addTo(map);
+
+            var labelLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+            pane: 'markerPane', // Forza le etichette sopra tutto
+             zIndex: 1000
+           }).addTo(map);
 
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
         } catch (error) {
