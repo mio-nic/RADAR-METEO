@@ -37,8 +37,31 @@ def update_radar():
                 df.crs = src.crs
                 df = df.to_crs(epsg=4326)
                 
-                # Semplificazione necessaria per file CUM24 (sono molto complessi)
-                df['geometry'] = df['geometry'].simplify(0.01)
+                if not df.empty:
+                df.crs = src.crs
+                df = df.to_crs(epsg=4326)
+
+                # --- OTTIMIZZAZIONE AGGRESSIVA ---
+                # 1. Arrotondiamo i millimetri per raggruppare i valori simili
+                df['mm'] = df['mm'].round(0).astype(int)
+                
+                # 2. Raggruppiamo i poligoni che hanno lo stesso valore di pioggia
+                df = df.dissolve(by='mm').reset_index()
+
+                # 3. Semplifichiamo le linee (0.01 è circa 1km di precisione)
+                df['geometry'] = df['geometry'].simplify(0.01, preserve_topology=True)
+                
+                # 4. Rimuoviamo poligoni troppo piccoli (rumore)
+                df = df[df.geometry.area > 0.001]
+                # ---------------------------------
+
+                if not os.path.exists('data'): os.makedirs('data')
+                
+                # Salvataggio
+                df.to_file("data/pioggia_veneto.json", driver='GeoJSON')
+                
+                size_mb = os.path.getsize("data/pioggia_veneto.json") / (1024 * 1024)
+                print(f"Successo! File ottimizzato: {size_mb:.2f} MB")
                 
                 if not os.path.exists('data'): os.makedirs('data')
                 df.to_file("data/pioggia_veneto.json", driver='GeoJSON')
