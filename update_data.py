@@ -44,23 +44,30 @@ def update_radar():
             
             df = gpd.GeoDataFrame.from_features(list(results))
             
-            if not df.empty:
+                if not df.empty:
                 df.crs = src.crs
                 df = df.to_crs(epsg=4326)
 
-                # --- RITAGLIO VENETO ---
-                # Coordinate: Longitudine 10.5-13.1, Latitudine 44.7-46.7
+                # --- OTTIMIZZAZIONE ALTO DETTAGLIO E SENZA BUCHI ---
+                # 1. Arrotondiamo i valori
+                df['mm'] = df['mm'].round(1)
+                
+                # 2. Dissolve per unire i valori uguali
+                df = df.dissolve(by='mm').reset_index()
+
+                # 3. TRUCCO DEL BUFFER: chiude i micro-spazi tra i poligoni
+                # Espandiamo di un millesimo di grado e contraiamo subito dopo
+                df['geometry'] = df['geometry'].buffer(0.001).buffer(-0.001)
+
+                # 4. Semplificazione leggera (mantenendo la topologia per non creare nuovi buchi)
+                df['geometry'] = df['geometry'].simplify(0.0005, preserve_topology=True)
+                
+                # Ritaglio Veneto
                 df = df.cx[10.5:13.1, 44.7:46.7]
                 
-                if not df.empty:
-                    # Ottimizzazione (Arrotondamento e Dissolve)
-                    df['mm'] = df['mm'].round(1)
-                    df = df.dissolve(by='mm').reset_index()
-                    df['geometry'] = df['geometry'].simplify(0.0001, preserve_topology=True)
-
-                    if not os.path.exists('data'): os.makedirs('data')
-                    
-                    output_path = "data/pioggia_veneto.json"
+                # Salvataggio
+                if not os.path.exists('data'): os.makedirs('data')
+                df.to_file("data/pioggia_veneto.json", driver='GeoJSON')
                     df.to_file(output_path, driver='GeoJSON')
                     print(f"Aggiornamento Veneto completato. File: {os.path.getsize(output_path)/1024:.2f} KB")
                 else:
