@@ -59,3 +59,17 @@ def process_to_geojson():
 
 if get_latest_radar():
     process_to_geojson()
+
+if len(df) > 0:
+    # Filtro Veneto
+    veneto_bbox = df.cx[10.5:13.1, 44.7:46.7]
+    if not os.path.exists('data'): os.makedirs('data')
+    veneto_bbox.to_crs(epsg=4326).to_file("data/pioggia_veneto.json", driver='GeoJSON')
+    print("Dati salvati!")
+else:
+    # Se non piove, creiamo un file GeoJSON vuoto per non dare errore 404
+    if not os.path.exists('data'): os.makedirs('data')
+    empty_geojson = '{"type":"FeatureCollection","features":[]}'
+    with open("data/pioggia_veneto.json", "w") as f:
+        f.write(empty_geojson)
+    print("Nessuna pioggia rilevata, creato file vuoto.")
