@@ -133,7 +133,7 @@ function style(feature) {
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
             grades = [0.5, 2, 7, 15, 30],
-            labels = ['<strong>Intensità (mm/h)</strong><br>'];
+            labels = ['<strong>Intensità (mm)</strong><br>'];
 
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
