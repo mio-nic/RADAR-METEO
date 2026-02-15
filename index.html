@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strade Sicure | Radar Veneto</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* Sfondo scuro e font pulito */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #header {
+            padding: 15px 20px;
+            background: #1f1f1f;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #map {
+            height: calc(100vh - 70px); /* Sottrae l'altezza dell'header */
+            width: 100%;
+            background: #121212;
+        }
+
+        /* Stile per la legenda */
+        .info.legend {
+            background: rgba(31, 31, 31, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            color: #fff;
+            line-height: 18px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+            border: 1px solid #fff;
+        }
+
+        /* Badge aggiornamento */
+        .status-badge {
+            font-size: 0.8em;
+            background: #2e7d32;
+            padding: 4px 10px;
+            border-radius: 12px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <strong>PROGETTO STRADE SICURE - VENETO</strong>
+    <div id="update-time" class="status-badge">In aggiornamento...</div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Inizializzazione mappa con stile Dark (CartoDB Dark Matter)
+    var map = L.map('map').setView([45.45, 11.9], 8);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    // Funzione per definire il colore in base all'intensità (mm/h)
+    function getColor(d) {
+        return d > 30  ? '#7a0177' :
+               d > 15  ? '#ae017e' :
+               d > 7   ? '#f768a1' :
+               d > 2   ? '#fbb4b9' :
+               d > 0.5 ? '#feebe2' :
+                         'transparent';
+    }
+
+    function style(feature) {
+        return {
+            fillColor: getColor(feature.properties.mm),
+            weight: 0.5,
+            opacity: 1,
+            color: 'white',
+            fillOpacity: 0.6
+        };
+    }
+
+    // Caricamento dati GeoJSON
+    async function loadRadarData() {
+        const timestamp = new Date().getTime();
+        try {
+            const response = await fetch(`data/pioggia_veneto.json?t=${timestamp}`);
+            const data = await response.json();
+            
+            L.geoJson(data, {
+                style: style,
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup("Intensità: " + feature.properties.mm + " mm/h");
+                }
+            }).addTo(map);
+
+            document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
+        } catch (error) {
+            console.error("Errore nel caricamento dati:", error);
+            document.getElementById('update-time').innerText = "Dati non disponibili";
+        }
+    }
+
+    // Aggiunta Legenda
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = [0.5, 2, 7, 15, 30],
+            labels = ['<strong>Intensità (mm/h)</strong><br>'];
+
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + getColor(grades[i] + 0.1) + '"></i> ' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+        return div;
+    };
+    legend.addTo(map);
+
+    // Carica i dati all'avvio
+    loadRadarData();
+
+    // Ricarica i dati ogni 5 minuti (lato client)
+    setInterval(loadRadarData, 300000);
+
+</script>
+
+</body>
+</html>
