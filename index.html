@@ -112,7 +112,7 @@ function style(feature) {
             L.geoJson(data, {
                 style: style,
                 onEachFeature: function (feature, layer) {
-                    layer.bindPopup("Intensità: " + feature.properties.mm + " mm");
+                    layer.bindPopup("Pioggia 24h: " + feature.properties.mm + " mm");
                 }
             }).addTo(map);
 
