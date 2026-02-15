@@ -54,9 +54,9 @@ def update_radar():
                 
                 if not df.empty:
                     # Ottimizzazione (Arrotondamento e Dissolve)
-                    df['mm'] = df['mm'].round(0).astype(int)
+                    df['mm'] = df['mm'].round(1)
                     df = df.dissolve(by='mm').reset_index()
-                    df['geometry'] = df['geometry'].simplify(0.005, preserve_topology=True)
+                    df['geometry'] = df['geometry'].simplify(0.001, preserve_topology=True)
 
                     if not os.path.exists('data'): os.makedirs('data')
                     
