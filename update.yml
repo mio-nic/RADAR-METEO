@@ -1,0 +1,23 @@
+name: Radar Update 10min
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Gira ogni 10 minuti
+  workflow_dispatch: # Permette avvio manuale
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python & GIS Libs
+        run: |
+          pip install requests rasterio geopandas shapely
+      - name: Execute Script
+        run: python update_data.py
+      - name: Deploy to GitHub Pages/Repo
+        run: |
+          git config --global user.name "Bot"
+          git config --global user.email "bot@github.com"
+          git add data/pioggia_veneto.json
+          git commit -m "Aggiornamento radar $(date)" || exit 0
+          git push
