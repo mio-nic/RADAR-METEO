@@ -1,0 +1,27 @@
+name: Radar Update Script
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Libs
+        run: pip install requests rasterio geopandas shapely
+      - name: Run Script
+        run: python update_data.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add data/pioggia_veneto.json
+          git commit -m "Update radar data" || echo "No changes"
+          git push
