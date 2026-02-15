@@ -97,8 +97,8 @@ function style(feature) {
     return {
         fillColor: col,
         color: col,      // Il bordo ha lo stesso colore della pioggia
-        weight: 1,        // Uno spessore minimo aiuta a coprire le giunzioni
-        fillOpacity: 0.1
+        weight: 0.1,        // Uno spessore minimo aiuta a coprire le giunzioni
+        fillOpacity: 0.6
     };
 }
 
@@ -112,7 +112,7 @@ function style(feature) {
             L.geoJson(data, {
                 style: style,
                 onEachFeature: function (feature, layer) {
-                    layer.bindPopup("Intensità: " + feature.properties.mm + " mm/h");
+                    layer.bindPopup("Intensità: " + feature.properties.mm + " mm");
                 }
             }).addTo(map);
 
