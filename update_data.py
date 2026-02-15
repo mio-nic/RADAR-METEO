@@ -36,7 +36,7 @@ def update_radar():
         # 4. Elaborazione GIS (come prima)
         with rasterio.open("radar_temp.tif") as src:
             image = src.read(1)
-            mask = (image > 0) & (image < 255)
+            mask = (image > 0.1) & (image < 255)
             results = (
                 {'properties': {'mm': float(v)}, 'geometry': s}
                 for i, (s, v) in enumerate(shapes(image, mask=mask, transform=src.transform))
