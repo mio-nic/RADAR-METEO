@@ -3,75 +3,72 @@ import rasterio
 import os
 import geopandas as gpd
 from rasterio.features import shapes
-import numpy as np
+from shapely.geometry import shape
 
 BASE_URL = "https://radar-api.protezionecivile.it"
 
 def update_radar():
     try:
-        # 1. Recupero l'ultimo timestamp per CUM24
-        print("Controllo disponibilità CUM24...")
+        # 1. Recupero timestamp
         res_last = requests.get(f"{BASE_URL}/findLastProductByType?type=CUM24", timeout=30)
         res_last.raise_for_status()
-        data = res_last.json()
-        
-        if not data.get('lastProducts'):
-            print("Nessun prodotto trovato.")
-            return
+        last_time = res_last.json()['lastProducts'][0]['time']
 
-        last_time = data['lastProducts'][0]['time']
-
-        # 2. Richiesta URL di download
+        # 2. Download URL
         res_dl = requests.post(f"{BASE_URL}/downloadProduct", 
                                json={"productType": "CUM24", "productDate": last_time},
                                timeout=30)
         res_dl.raise_for_status()
         download_url = res_dl.json().get('url')
 
-        # 3. Download del file radar
+        # 3. Download file
         tif_data = requests.get(download_url, timeout=60)
         with open("radar_temp.tif", "wb") as f:
             f.write(tif_data.content)
 
-        # 4. Elaborazione GIS
+        # 4. Elaborazione GIS Avanzata
         with rasterio.open("radar_temp.tif") as src:
             image = src.read(1)
-            # Maschera per pioggia (escludiamo valori nulli e bordi mappa)
+            # Prendiamo tutti i dati validi
             mask = (image > 0.5) & (image < 200)
             
-            results = ({'properties': {'mm': float(v)}, 'geometry': s} 
-                       for i, (s, v) in enumerate(shapes(image, mask=mask, transform=src.transform)))
+            # Estraiamo le "shapes" direttamente come oggetti Shapely
+            results = [
+                {'properties': {'mm': float(v)}, 'geometry': shape(s)} 
+                for s, v in shapes(image, mask=mask, transform=src.transform)
+            ]
             
-            df = gpd.GeoDataFrame.from_features(list(results))
+            df = gpd.GeoDataFrame.from_features(results)
             
             if not df.empty:
                 df.crs = src.crs
                 df = df.to_crs(epsg=4326)
-
-                # --- RITAGLIO VENETO IMMEDIATO ---
+                
+                # RITAGLIO VENETO
                 df = df.cx[10.5:13.1, 44.7:46.7]
 
                 if not df.empty:
-                    # --- OTTIMIZZAZIONE PER REGOLARITÀ ---
-                    df['mm'] = df['mm'].round(1)
+                    # --- SOLUZIONE SPAZI VUOTI ---
+                    # 1. Raggruppiamo la pioggia in classi più ampie per "saldare" i pixel
+                    # (es. 1.2 e 1.4 diventano entrambi 1)
+                    df['mm'] = df['mm'].round(0).astype(int)
+                    
+                    # 2. Dissolve: fonde i poligoni adiacenti con lo stesso valore
                     df = df.dissolve(by='mm').reset_index()
 
-                    # Trucco Buffer: chiude i buchi tra i poligoni
-                    df['geometry'] = df['geometry'].buffer(0.0008).buffer(-0.0008)
+                    # 3. BUFFER POSITIVO E NEGATIVO (Cruciale)
+                    # Usiamo un buffer leggermente più grande (0.0015) per forzare la chiusura dei pixel
+                    df['geometry'] = df['geometry'].buffer(0.0015, join_style=1).buffer(-0.0015, join_style=1)
 
-                    # Semplificazione per mantenere contorni puliti
+                    # 4. Semplificazione finale
                     df['geometry'] = df['geometry'].simplify(0.0005, preserve_topology=True)
                     
-                    # Salvataggio
                     if not os.path.exists('data'): os.makedirs('data')
-                    output_path = "data/pioggia_veneto.json"
-                    df.to_file(output_path, driver='GeoJSON')
-                    print(f"Aggiornamento Veneto completato. File: {os.path.getsize(output_path)/1024:.2f} KB")
+                    df.to_file("data/pioggia_veneto.json", driver='GeoJSON')
+                    print("Mappa salvata senza spazi vuoti.")
                 else:
-                    print("Nessuna pioggia rilevata nell'area del Veneto.")
                     crea_file_vuoto()
             else:
-                print("Nessuna pioggia rilevata in Italia.")
                 crea_file_vuoto()
 
     except Exception as e:
