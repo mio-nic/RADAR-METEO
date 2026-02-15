@@ -9,19 +9,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - name: Install Libs
-        run: pip install requests rasterio geopandas shapely
-      - name: Run Script
-        run: python update_data.py
-      - name: Commit and Push
+
+      - name: Install dependencies
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
+          pip install requests rasterio geopandas shapely
+
+      - name: Run Python Script
+        run: |
+          mkdir -p data
+          python update_data.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data/pioggia_veneto.json
-          git commit -m "Update radar data" || echo "No changes"
+          git commit -m "Aggiornamento radar automatico" || echo "Nessuna modifica rilevata"
           git push
