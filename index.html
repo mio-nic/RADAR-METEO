@@ -80,24 +80,27 @@
     }).addTo(map);
 
     // Funzione per definire il colore in base all'intensità (mm/h)
-    function getColor(d) {
-        return d > 30  ? '#7a0177' :
-               d > 15  ? '#ae017e' :
-               d > 7   ? '#f768a1' :
-               d > 1   ? '#fbb4b9' :
-               d > 0.1 ? '#feebe2' :
-                         'transparent';
-    }
+function getColor(d) {
+    return d > 50  ? '#b10026' : // Rosso scuro
+           d > 30  ? '#e31a1c' : // Rosso
+           d > 20  ? '#fc4e2a' : // Arancio scuro
+           d > 10  ? '#fd8d3c' : // Arancio
+           d > 5   ? '#feb24c' : // Giallo/Arancio
+           d > 2   ? '#fed976' : // Giallo
+           d > 0.5 ? '#a1dab4' : // Verde acqua
+           d > 0.1 ? '#41b6c4' : // Blu chiaro
+                     'transparent';
+}
 
-    function style(feature) {
-        return {
-            fillColor: getColor(feature.properties.mm),
-            weight: 0.5,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.6
-        };
-    }
+function style(feature) {
+    return {
+        fillColor: getColor(feature.properties.mm),
+        weight: 0,             // Rimuove il bordo
+        opacity: 0,            // Rende il bordo totalmente invisibile
+        fillOpacity: 0.6,      // Trasparenza per leggere le città sotto
+        stroke: false          // Disabilita il disegno del contorno
+    };
+}
 
     // Caricamento dati GeoJSON
     async function loadRadarData() {
