@@ -8,94 +8,85 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* Sfondo scuro e font pulito */
         body {
             margin: 0;
             padding: 0;
-            background-color: #121212;
+            background-color: #0b0b0b;
             color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         #header {
-            padding: 15px 20px;
-            background: #1f1f1f;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            height: 60px;
+            padding: 0 20px;
+            background: #1a1a1a;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.8);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #333;
+            position: relative;
+            z-index: 2000;
         }
 
         #map {
-            height: calc(100vh - 70px); /* Sottrae l'altezza dell'header */
+            height: calc(100vh - 60px);
             width: 100%;
-            background: #121212;
+            background: #0b0b0b;
         }
 
-        /* Stile per la legenda */
+        /* Legenda stile RainViewer */
         .info.legend {
-            background: rgba(31, 31, 31, 0.9);
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 12px;
+            border-radius: 4px;
             color: #fff;
-            line-height: 18px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            line-height: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7);
+            border: 1px solid #444;
+            font-size: 12px;
         }
         .legend i {
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
             float: left;
             margin-right: 8px;
-            opacity: 0.8;
-            border: 1px solid #fff;
+            margin-top: 3px;
+            border-radius: 2px;
         }
 
-        /* Badge aggiornamento */
         .status-badge {
-            font-size: 0.8em;
-            background: #2e7d32;
-            padding: 4px 10px;
-            border-radius: 12px;
-            color: white;
+            font-size: 0.85em;
+            background: #1b5e20;
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: #81c784;
+            border: 1px solid #2e7d32;
+            font-weight: bold;
         }
 
-        /* Applica un filtro alle aree GeoJSON per fonderle meglio */
+        /* Effetti Radar sui Poligoni */
         .leaflet-interactive {
-       filter: blur(0.8px); /* Crea l'effetto sfumato tipico del radar */
-       transition: filter 0.5s;
-       }
-
-      /* Mantieni le etichette delle città nitide */
-        .leaflet-pane.marker-pane, 
-        .leaflet-pane.tooltip-pane {
-        filter: none !important;
+            filter: saturate(1.4) brightness(1.1);
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
-        .leaflet-interactive {
-        /* Crea un effetto di fusione tra le piccole celle */
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        /* Un leggerissimo shadow rende i colori più profondi */
-        filter: drop-shadow(0 0 1px rgba(0,0,0,0.5));
-        }
-
-        .leaflet-interactive {
-            stroke-antialiasing: true;
-            /* Effetto 'Glow' per far sembrare il radar luminoso */
-        filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
-        }
-
-        /* Rendi le etichette delle città bianche e con ombra per leggerle sopra i colori forti */
-        .leaflet-pane.marker-pane {
-         filter: brightness(0) invert(1) drop-shadow(0 0 2px black);
+        /* Forza le etichette e le strade a essere nitide e sopra tutto */
+        .leaflet-labels-pane {
+            filter: brightness(1.6) contrast(1.1);
+            pointer-events: none !important; /* Non blocca i clic sul radar */
         }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <strong>PROGETTO STRADE SICURE - VENETO</strong>
-    <div id="update-time" class="status-badge">In aggiornamento...</div>
+    <div style="display: flex; align-items: center;">
+        <span style="color: #ff3d00; font-weight: bold; margin-right: 10px;">●</span>
+        <strong>RADAR VENETO 24H</strong>
+    </div>
+    <div id="update-time" class="status-badge">Sincronizzazione...</div>
 </div>
 
 <div id="map"></div>
@@ -103,80 +94,85 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Inizializzazione mappa con stile Dark (CartoDB Dark Matter)
-    var map = L.map('map').setView([45.45, 11.9], 8);
+    // 1. Inizializzazione Mappa
+    var map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+    }).setView([45.45, 11.9], 8);
 
-var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap'
-}).addTo(map);
+    // 2. Creazione Panes (Livelli ordinati)
+    map.createPane('radarPane');
+    map.getPane('radarPane').style.zIndex = 400; // Sotto le etichette
+    
+    map.createPane('labelsPane');
+    map.getPane('labelsPane').style.zIndex = 650; // Sopra i poligoni
 
-    // Scala cromatica Vivida (Standard Radar)
-function getColor(d) {
-    return d > 100 ? '#4a0000' : // Marrone scuro (Estremo)
-           d > 80  ? '#7e0000' : 
-           d > 60  ? '#ff0000' : // Rosso
-           d > 50  ? '#ff4500' : // Arancio-Rosso
-           d > 40  ? '#ff8c00' : // Arancione
-           d > 30  ? '#ffae00' : 
-           d > 25  ? '#ffd700' : // Oro
-           d > 20  ? '#ffff00' : // Giallo
-           d > 15  ? '#adff2f' : // Verde-Giallo
-           d > 10  ? '#00ff00' : // Verde Brillante
-           d > 7   ? '#00fa9a' : 
-           d > 5   ? '#00ced1' : // Turchese
-           d > 3   ? '#1e90ff' : // Blu Dodger
-           d > 1   ? '#0000ff' : // Blu
-           d > 0.5 ? '#00008b' : // Blu Scuro
-           d > 0.1 ? '#191970' : // Notte
-                     'transparent';
-}
+    // 3. Layer di Fondo (Nudo)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
 
-function style(feature) {
-    var col = getColor(feature.properties.mm);
-    return {
-        fillColor: col,
-        color: col,       // Bordo identico al riempimento per continuità
-        weight: 0.2,      // Aumentato leggermente per saldare i poligoni
-        fillOpacity: 0.55, // Più vivido
-        opacity: 0.4,     // Rende i bordi meno netti
-        smoothFactor: 0.1, // Ammorbidisce le linee di rendering di Leaflet
-        lineJoin: 'round' // Arrotonda le giunzioni
-    };
-}
+    // 4. Layer Strade e Etichette (Notte - Sopra tutto)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+        pane: 'labelsPane'
+    }).addTo(map);
 
-    // Caricamento dati GeoJSON
+    var radarLayerGroup = L.layerGroup().addTo(map);
+
+    function getColor(d) {
+        return d > 80  ? '#4a0000' :
+               d > 60  ? '#ff0000' :
+               d > 40  ? '#ff8c00' :
+               d > 25  ? '#ffd700' :
+               d > 15  ? '#adff2f' :
+               d > 7   ? '#00ff00' :
+               d > 3   ? '#1e90ff' :
+               d > 0.5 ? '#00008b' :
+               d > 0.1 ? '#191970' :
+                         'transparent';
+    }
+
+    function style(feature) {
+        var col = getColor(feature.properties.mm);
+        return {
+            fillColor: col,
+            color: col,
+            weight: 0.8,         // Aiuta a chiudere i micro-buchi
+            fillOpacity: 0.6,    // Trasparenza per vedere le strade sotto
+            opacity: 0.3,
+            smoothFactor: 0.5,
+            pane: 'radarPane'
+        };
+    }
+
     async function loadRadarData() {
         const timestamp = new Date().getTime();
         try {
             const response = await fetch(`data/pioggia_veneto.json?t=${timestamp}`);
+            if (!response.ok) throw new Error("File non trovato");
             const data = await response.json();
             
+            // Rimuove il vecchio layer prima di aggiungere il nuovo (fondamentale per aggiornamenti)
+            radarLayerGroup.clearLayers();
+
             L.geoJson(data, {
                 style: style,
                 onEachFeature: function (feature, layer) {
-                    layer.bindPopup("Pioggia 24h: " + feature.properties.mm + " mm");
+                    layer.bindPopup("<b>Accumulo:</b> " + feature.properties.mm + " mm");
                 }
-            }).addTo(map);
-
-        var topLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-            pane: 'overlayPane', // Questo pane è nativamente sopra le "path" (i poligoni)
-              zIndex: 1000,
-            opacity: 0.9 // Leggermente trasparente per non coprire troppo
-            }).addTo(map);
+            }).addTo(radarLayerGroup);
 
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
         } catch (error) {
-            console.error("Errore nel caricamento dati:", error);
-            document.getElementById('update-time').innerText = "Dati non disponibili";
+            console.error("Errore dati:", error);
+            document.getElementById('update-time').innerText = "In attesa di dati...";
         }
     }
 
-    // Aggiunta Legenda
+    // Legenda Completa
     var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0.5, 2, 7, 15, 30],
-            labels = ['<strong>Intensità (mm)</strong><br>'];
+            grades = [0.1, 0.5, 3, 7, 15, 25, 40, 60],
+            labels = ['<strong>Pioggia 24h (mm)</strong><br>'];
 
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
@@ -187,11 +183,8 @@ function style(feature) {
     };
     legend.addTo(map);
 
-    // Carica i dati all'avvio
     loadRadarData();
-
-    // Ricarica i dati ogni 5 minuti (lato client)
-    setInterval(loadRadarData, 300000);
+    setInterval(loadRadarData, 300000); // Aggiorna ogni 5 minuti
 
 </script>
 
