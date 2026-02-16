@@ -58,6 +58,18 @@
             border-radius: 12px;
             color: white;
         }
+
+        /* Applica un filtro alle aree GeoJSON per fonderle meglio */
+        .leaflet-interactive {
+       filter: blur(0.8px); /* Crea l'effetto sfumato tipico del radar */
+       transition: filter 0.5s;
+       }
+
+      /* Mantieni le etichette delle città nitide */
+        .leaflet-pane.marker-pane, 
+        .leaflet-pane.tooltip-pane {
+        filter: none !important;
+        }
     </style>
 </head>
 <body>
@@ -79,16 +91,18 @@ var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
-    // Funzione per definire il colore in base all'intensità (mm/h)
+    // Scala cromatica Vivida (Standard Radar)
 function getColor(d) {
-    return d > 50  ? '#b10026' : // Rosso scuro
-           d > 30  ? '#e31a1c' : // Rosso
-           d > 20  ? '#fc4e2a' : // Arancio scuro
-           d > 10  ? '#fd8d3c' : // Arancio
-           d > 5   ? '#feb24c' : // Giallo/Arancio
-           d > 2   ? '#fed976' : // Giallo
-           d > 0.5 ? '#1d3ab8' : // Verde acqua
-           d > 0.1 ? '#41b6c4' : // Blu chiaro
+    return d > 100 ? '#7e0023' : // Viola (Estremo)
+           d > 70  ? '#ff00ff' : // Magenta (Violento)
+           d > 50  ? '#ff0000' : // Rosso (Forte)
+           d > 30  ? '#ff7800' : // Arancione 
+           d > 20  ? '#ffff00' : // Giallo (Moderata)
+           d > 10  ? '#00ff00' : // Verde acceso
+           d > 5   ? '#00cc00' : // Verde scuro
+           d > 2   ? '#00aaff' : // Azzurro
+           d > 0.5 ? '#0055ff' : // Blu
+           d > 0.1 ? '#0000aa' : // Blu scuro
                      'transparent';
 }
 
@@ -96,9 +110,12 @@ function style(feature) {
     var col = getColor(feature.properties.mm);
     return {
         fillColor: col,
-        color: col,      // Il bordo ha lo stesso colore della pioggia
-        weight: 0.1,        // Uno spessore minimo aiuta a coprire le giunzioni
-        fillOpacity: 0.6
+        color: col,       // Bordo identico al riempimento per continuità
+        weight: 1.5,      // Aumentato leggermente per saldare i poligoni
+        fillOpacity: 0.7, // Più vivido
+        opacity: 0.8,     // Rende i bordi meno netti
+        smoothFactor: 2.0, // Ammorbidisce le linee di rendering di Leaflet
+        lineJoin: 'round' // Arrotonda le giunzioni
     };
 }
 
