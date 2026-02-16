@@ -45,12 +45,14 @@ def update_radar():
                 df = df.cx[10.5:13.1, 44.7:46.7] # Ritaglio Veneto
 
                 if not df.empty:
-                    # Raggruppiamo per mm ma NON uniamo i poligoni distanti (keep_geom_type)
-                    # Arrotondiamo a 0.5 per avere più "gradini" di colore e celle più piccole
-                    df['mm'] = (df['mm'] * 2).round().astype(float) / 2
-                    
-                    # Semplificazione MINIMA (0.0001 invece di 0.001) per non "mangiare" i dettagli
-                    df['geometry'] = df['geometry'].simplify(0.0001, preserve_topology=True)
+                # Modifica queste righe nel tuo update_data.py
+                df['mm'] = df['mm'].round(1)
+                df = df.dissolve(by='mm').reset_index()
+
+        # Il segreto di RainViewer: un buffer leggero per saldare i pixel 
+            # e una semplificazione che non crea angoli vivi
+                df['geometry'] = df['geometry'].buffer(0.001, join_style=1).buffer(-0.001, join_style=1)
+                df['geometry'] = df['geometry'].simplify(0.0008, preserve_topology=True)
                     
                     # Salvataggio
                     if not os.path.exists('data'): os.makedirs('data')
