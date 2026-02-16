@@ -101,16 +101,22 @@ var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}
 
     // Scala cromatica Vivida (Standard Radar)
 function getColor(d) {
-    return d > 100 ? '#7e0023' : // Viola (Estremo)
-           d > 70  ? '#ff00ff' : // Magenta (Violento)
-           d > 50  ? '#ff0000' : // Rosso (Forte)
-           d > 30  ? '#ff7800' : // Arancione 
-           d > 20  ? '#ffff00' : // Giallo (Moderata)
-           d > 10  ? '#00ff00' : // Verde acceso
-           d > 5   ? '#00cc00' : // Verde scuro
-           d > 2   ? '#00aaff' : // Azzurro
-           d > 0.5 ? '#0055ff' : // Blu
-           d > 0.1 ? '#0000aa' : // Blu scuro
+    return d > 100 ? '#4a0000' : // Marrone scuro (Estremo)
+           d > 80  ? '#7e0000' : 
+           d > 60  ? '#ff0000' : // Rosso
+           d > 50  ? '#ff4500' : // Arancio-Rosso
+           d > 40  ? '#ff8c00' : // Arancione
+           d > 30  ? '#ffae00' : 
+           d > 25  ? '#ffd700' : // Oro
+           d > 20  ? '#ffff00' : // Giallo
+           d > 15  ? '#adff2f' : // Verde-Giallo
+           d > 10  ? '#00ff00' : // Verde Brillante
+           d > 7   ? '#00fa9a' : 
+           d > 5   ? '#00ced1' : // Turchese
+           d > 3   ? '#1e90ff' : // Blu Dodger
+           d > 1   ? '#0000ff' : // Blu
+           d > 0.5 ? '#00008b' : // Blu Scuro
+           d > 0.1 ? '#191970' : // Notte
                      'transparent';
 }
 
