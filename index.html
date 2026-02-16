@@ -136,8 +136,8 @@ function style(feature) {
     return {
         fillColor: col,
         color: col,       // Bordo identico al riempimento per continuità
-        weight: 0.5,      // Aumentato leggermente per saldare i poligoni
-        fillOpacity: 0.7, // Più vivido
+        weight: 0.2,      // Aumentato leggermente per saldare i poligoni
+        fillOpacity: 0.55, // Più vivido
         opacity: 0.4,     // Rende i bordi meno netti
         smoothFactor: 0.1, // Ammorbidisce le linee di rendering di Leaflet
         lineJoin: 'round' // Arrotonda le giunzioni
@@ -158,10 +158,11 @@ function style(feature) {
                 }
             }).addTo(map);
 
-            var labelLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-            pane: 'markerPane', // Forza le etichette sopra tutto
-             zIndex: 1000
-           }).addTo(map);
+        var topLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+            pane: 'overlayPane', // Questo pane è nativamente sopra le "path" (i poligoni)
+              zIndex: 1000,
+            opacity: 0.9 // Leggermente trasparente per non coprire troppo
+            }).addTo(map);
 
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
         } catch (error) {
