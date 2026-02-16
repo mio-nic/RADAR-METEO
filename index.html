@@ -72,11 +72,24 @@
             stroke-linejoin: round;
         }
 
-        /* Forza le etichette e le strade a essere nitide e sopra tutto */
-        .leaflet-labels-pane {
-            filter: brightness(1.6) contrast(1.1);
-            pointer-events: none !important; /* Non blocca i clic sul radar */
-        }
+        /* Effetto Strade Blu Neon */
+.leaflet-labels-pane {
+    /* Trasforma il grigio/bianco di CartoDB in Blu Elettrico */
+    filter: 
+        invert(100%) 
+        hue-rotate(180deg) 
+        brightness(1.5) 
+        saturate(5) 
+        drop-shadow(0 0 2px #00ffff);
+    
+    pointer-events: none !important;
+    opacity: 0.9;
+}
+
+/* Rende i poligoni della pioggia più "morbidi" per far risaltare il neon delle strade */
+.leaflet-interactive {
+    filter: saturate(1.2) brightness(0.9) blur(0.4px);
+}
     </style>
 </head>
 <body>
