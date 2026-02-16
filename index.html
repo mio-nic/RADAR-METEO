@@ -78,6 +78,17 @@
         /* Un leggerissimo shadow rende i colori più profondi */
         filter: drop-shadow(0 0 1px rgba(0,0,0,0.5));
         }
+
+        .leaflet-interactive {
+            stroke-antialiasing: true;
+            /* Effetto 'Glow' per far sembrare il radar luminoso */
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
+        }
+
+        /* Rendi le etichette delle città bianche e con ombra per leggerle sopra i colori forti */
+        .leaflet-pane.marker-pane {
+         filter: brightness(0) invert(1) drop-shadow(0 0 2px black);
+        }
     </style>
 </head>
 <body>
