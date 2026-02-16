@@ -70,6 +70,14 @@
         .leaflet-pane.tooltip-pane {
         filter: none !important;
         }
+
+        .leaflet-interactive {
+        /* Crea un effetto di fusione tra le piccole celle */
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        /* Un leggerissimo shadow rende i colori più profondi */
+        filter: drop-shadow(0 0 1px rgba(0,0,0,0.5));
+        }
     </style>
 </head>
 <body>
@@ -111,10 +119,10 @@ function style(feature) {
     return {
         fillColor: col,
         color: col,       // Bordo identico al riempimento per continuità
-        weight: 1.5,      // Aumentato leggermente per saldare i poligoni
+        weight: 0.5,      // Aumentato leggermente per saldare i poligoni
         fillOpacity: 0.7, // Più vivido
-        opacity: 0.0,     // Rende i bordi meno netti
-        smoothFactor: 2.0, // Ammorbidisce le linee di rendering di Leaflet
+        opacity: 0.4,     // Rende i bordi meno netti
+        smoothFactor: 0.1, // Ammorbidisce le linee di rendering di Leaflet
         lineJoin: 'round' // Arrotonda le giunzioni
     };
 }
