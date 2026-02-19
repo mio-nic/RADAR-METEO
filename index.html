@@ -31,7 +31,7 @@
 
 <div id="header">
     <div class="header-controls">
-        <strong style="color:var(--accent)">RADAR VENETO</strong>
+        <strong style="color:var(--accent)">PIOGGIA 24H </strong>
         <select id="map-style" onchange="changeStyle()">
             <option value="dark">NOTTE</option>
             <option value="light">GIORNO</option>
@@ -120,7 +120,7 @@
                     fillOpacity: 0.7 
                 }),
                 onEachFeature: (f, l) => {
-                    l.bindPopup(`<b>ACCUMULO PIOGGIA</b><br>Dato: <b>${f.properties.mm} mm</b>`);
+                    l.bindPopup(`<b>PIOGGIA 24H</b><br>Dato: <b>${f.properties.mm} mm</b>`);
                 }
             }).addTo(radarLayerGroup);
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
