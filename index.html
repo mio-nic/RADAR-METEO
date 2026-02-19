@@ -14,13 +14,13 @@
         .header-controls { display: flex; align-items: center; gap: 10px; }
         button, select { background: rgba(255,255,255,0.05); color: var(--accent); border: 1px solid var(--accent); padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         
-        /* Visibilità Strade e Etichette */
+        /* CORREZIONE FONDAMENTALE PER POPUP */
+        .leaflet-labelsPane-pane { pointer-events: none !important; }
         .labels-high-visibility { filter: brightness(1.2) contrast(1.4) drop-shadow(1px 1px 1px black); pointer-events: none !important; }
-        .blue-roads { filter: invert(100%) hue-rotate(190deg) brightness(1.8) saturate(5) drop-shadow(0 0 2px black) !important; }
+        .blue-roads { filter: invert(100%) hue-rotate(190deg) brightness(1.8) saturate(5) drop-shadow(0 0 2px black) !important; pointer-events: none !important; }
         
         .status-badge { font-size: 0.8em; background: #1b5e20; padding: 4px 10px; border-radius: 20px; color: #81c784; }
         
-        /* LEGENDA CORRETTA */
         .legend { 
             background: rgba(0,0,0,0.8); 
             padding: 10px; 
@@ -56,9 +56,13 @@
 <script>
     var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([45.45, 11.9], 8);
     
+    // Ordine dei livelli (Panes)
     map.createPane('radarPane').style.zIndex = 400;
     map.createPane('comuniPane').style.zIndex = 500;
     map.createPane('labelsPane').style.zIndex = 650;
+
+    // IMPORTANTE: Rendiamo il pane delle etichette "trasparente" ai click
+    map.getPane('labelsPane').style.pointerEvents = 'none';
 
     var baseLayer = L.layerGroup().addTo(map);
     var labelsLayer = L.layerGroup().addTo(map);
@@ -96,19 +100,19 @@
             const s = styles[document.getElementById('map-style').value];
             L.geoJson(data, {
                 pane: 'comuniPane',
-                style: { color: s.comuni, weight: 2, fillOpacity: 0 }
+                style: { color: s.comuni, weight: 1.5, fillOpacity: 0.05, fillColor: 'transparent' },
+                onEachFeature: (f, l) => {
+                    // Cerca il nome del comune nel tuo file QGIS (solitamente 'COMUNE' o 'NAME')
+                    const nomeComune = f.properties.COMUNE || f.properties.NAME || f.properties.nome || "Comune";
+                    l.bindTooltip(nomeComune, { sticky: true });
+                }
             }).addTo(comuniLayer);
         } catch (e) { console.error("Errore file comuni:", e); }
     }
 
-    // Funzione Colori Radar (Sincronizzata con la legenda)
     function getColor(d) {
-        return d > 60 ? '#ff0000' : 
-               d > 40 ? '#ff8c00' : 
-               d > 20 ? '#ffd700' : 
-               d > 10 ? '#00ff00' : 
-               d > 2  ? '#1e90ff' : 
-               d > 0.1 ? '#3939b3' : 'transparent';
+        return d > 60 ? '#ff0000' : d > 40 ? '#ff8c00' : d > 20 ? '#ffd700' : 
+               d > 10 ? '#00ff00' : d > 2  ? '#1e90ff' : d > 0.1 ? '#3939b3' : 'transparent';
     }
 
     async function forceUpdate() {
@@ -123,12 +127,12 @@
                 style: (f) => ({ 
                     fillColor: getColor(f.properties.mm), 
                     color: getColor(f.properties.mm), 
-                    weight: 0.0, 
-                    fillOpacity: 0.6 
+                    weight: 0, 
+                    fillOpacity: 0.7 
                 }),
                 onEachFeature: (f, l) => {
-                    // Se non hai il nome nel file pioggia, mostriamo solo i mm
-                    l.bindPopup(`<b>Dato Radar</b><br>Accumulo: ${f.properties.mm} mm`);
+                    // Popup con stile migliorato
+                    l.bindPopup(`<b>RILEVAMENTO PIOGGIA</b><br>Accumulo: <b>${f.properties.mm} mm</b>`);
                 }
             }).addTo(radarLayerGroup);
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
@@ -136,22 +140,19 @@
         setTimeout(() => icon.classList.remove('spinning'), 1000);
     }
 
-    // --- LOGICA DELLA LEGENDA ---
     var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'legend'),
-            grades = [0.1, 2, 10, 20, 40, 60],
-            labels = ['<strong>Pioggia 24h (mm)</strong><br>'];
+            grades = [0.1, 2, 10, 20, 40, 60];
+        div.innerHTML = '<strong>Pioggia 24h (mm)</strong><br>';
         for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 0.1) + '"></i> ' +
+            div.innerHTML += '<i style="background:' + getColor(grades[i] + 0.1) + '"></i> ' +
                 grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
         }
         return div;
     };
     legend.addTo(map);
 
-    // Esecuzione Iniziale
     changeStyle();
     loadComuni();
     forceUpdate();
