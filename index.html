@@ -90,6 +90,44 @@
 .leaflet-interactive {
     filter: saturate(1.2) brightness(0.9) blur(0.4px);
 }
+
+        #controls {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    z-index: 2000;
+}
+
+#refresh-btn {
+    background: rgba(10, 10, 10, 0.85);
+    color: #ffffff;
+    border: 2px solid #00d9ff; /* Blu neon */
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+#refresh-btn:hover {
+    background: #00d9ff;
+    color: #000;
+    box-shadow: 0 0 25px #00d9ff;
+}
+
+/* Etichette Bianco Brillante */
+.leaflet-labels-pane {
+    filter: brightness(2) contrast(1.5) drop-shadow(0 0 2px white) !important;
+    pointer-events: none;
+}
+
+/* Strade Blu Luminose (filtro applicato al layer sottostante le etichette) */
+.blue-roads {
+    filter: invert(100%) hue-rotate(190deg) brightness(2) saturate(8) !important;
+}
     </style>
 </head>
 <body>
@@ -101,6 +139,11 @@
     </div>
     <div id="update-time" class="status-badge">Sincronizzazione...</div>
 </div>
+    <div id="controls">
+    <button id="refresh-btn" onclick="forceUpdate()">
+        <span id="btn-icon">🔄</span> AGGIORNA DAI SERVER PC
+    </button>
+  </div>
 
 <div id="map"></div>
 
