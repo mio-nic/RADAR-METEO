@@ -3,98 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strade Sicure | Radar Veneto</title>
-    
+    <title>Radar Veneto | Pro</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
-        :root {
-            --bg-color: #0b0b0b;
-            --header-bg: #1a1a1a;
-            --text-color: #e0e0e0;
-            --accent-blue: #00d9ff;
-        }
-
-        body {
-            margin: 0; padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-        }
-
-        #header {
-            height: 60px;
-            padding: 0 20px;
-            background: var(--header-bg);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            z-index: 2000;
-            position: relative;
-        }
-
-        #map { height: calc(100vh - 60px); width: 100%; background: var(--bg-color); }
-
-        /* Controlli Header */
+        :root { --bg: #0b0b0b; --accent: #00d9ff; }
+        body { margin: 0; background: var(--bg); color: #e0e0e0; font-family: sans-serif; overflow: hidden; }
+        #header { height: 60px; padding: 0 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; z-index: 2000; position: relative; border-bottom: 1px solid #333; }
+        #map { height: calc(100vh - 60px); width: 100%; }
+        
         .header-controls { display: flex; align-items: center; gap: 10px; }
-
-        button, select {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--accent-blue);
-            border: 1px solid var(--accent-blue);
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75em;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        button:hover, select:hover { background: rgba(0, 217, 255, 0.15); }
-
-        /* --- STILE STRADE E ETICHETTE --- */
-        /* Rendiamo tutto leggibile con filtri di contrasto e ombre multiple */
-        .labels-high-visibility {
-            filter: 
-                brightness(0.8) 
-                contrast(1.4) 
-                drop-shadow(1px 1px 1px black) 
-                drop-shadow(-1px -1px 1px black) !important;
-            pointer-events: none !important;
-        }
-
-        /* Classe per il neon blu quando in modalità notte */
-        .blue-roads {
-            filter: invert(100%) hue-rotate(190deg) brightness(1.8) saturate(5) drop-shadow(0 0 2px black) !important;
-        }
-
-        .leaflet-interactive {
-            filter: saturate(1.4) brightness(1.1);
-            stroke-linecap: round;
-        }
-
-        .status-badge {
-            font-size: 0.8em;
-            background: #1b5e20;
-            padding: 4px 10px;
-            border-radius: 20px;
-            color: #81c784;
-            border: 1px solid #2e7d32;
-        }
-
-        .legend {
-            background: rgba(20, 20, 20, 0.9);
-            padding: 10px;
-            color: white;
-            font-size: 11px;
-            border-radius: 5px;
-            line-height: 18px;
-        }
-        .legend i { width: 14px; height: 14px; float: left; margin-right: 8px; border-radius: 2px; }
-
+        button, select { background: rgba(255,255,255,0.05); color: var(--accent); border: 1px solid var(--accent); padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        
+        /* Visibilità Strade e Etichette */
+        .labels-high-visibility { filter: brightness(1.2) contrast(1.4) drop-shadow(1px 1px 1px black); pointer-events: none !important; }
+        .blue-roads { filter: invert(100%) hue-rotate(190deg) brightness(1.8) saturate(5) drop-shadow(0 0 2px black) !important; }
+        
+        .status-badge { font-size: 0.8em; background: #1b5e20; padding: 4px 10px; border-radius: 20px; color: #81c784; }
+        .legend { background: rgba(0,0,0,0.8); padding: 10px; color: white; border-radius: 5px; line-height: 1.5; }
+        .legend i { width: 12px; height: 12px; float: left; margin-right: 8px; margin-top: 4px; }
         .spinning { animation: rotate 1s linear infinite; display: inline-block; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
@@ -103,113 +29,104 @@
 
 <div id="header">
     <div class="header-controls">
-        <span style="color: #ff3d00;">●</span>
-        <strong>RADAR VENETO</strong>
-        
+        <strong style="color:var(--accent)">RADAR VENETO</strong>
         <select id="map-style" onchange="changeStyle()">
-            <option value="dark">MODALITÀ NOTTE</option>
-            <option value="light">MODALITÀ GIORNO</option>
+            <option value="dark">NOTTE</option>
+            <option value="light">GIORNO</option>
         </select>
-
-        <button id="refresh-btn" onclick="forceUpdate()">
-            <span id="btn-icon">🔄</span> AGGIORNA
-        </button>
+        <button onclick="forceUpdate()"><span id="btn-icon">🔄</span> AGGIORNA</button>
     </div>
-    <div id="update-time" class="status-badge">Sincronizzazione...</div>
+    <div id="update-time" class="status-badge">Caricamento...</div>
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
     var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([45.45, 11.9], 8);
     
-    // Panes per l'ordine dei livelli
+    // Configurazione Panes (l'ordine dei cassetti)
     map.createPane('radarPane').style.zIndex = 400;
+    map.createPane('comuniPane').style.zIndex = 500;
     map.createPane('labelsPane').style.zIndex = 650;
 
     var baseLayer = L.layerGroup().addTo(map);
     var labelsLayer = L.layerGroup().addTo(map);
     var radarLayerGroup = L.layerGroup().addTo(map);
+    var comuniLayer = L.layerGroup().addTo(map);
 
-    // Gestione Stili
     const styles = {
         dark: {
             base: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
             labels: 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-            class: 'blue-roads'
+            class: 'blue-roads',
+            comuni: 'rgba(255,255,255,0.15)'
         },
         light: {
             base: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
             labels: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-            class: 'labels-high-visibility'
+            class: 'labels-high-visibility',
+            comuni: 'rgba(0,0,0,0.1)'
         }
     };
 
     function changeStyle() {
-        const selected = document.getElementById('map-style').value;
+        const s = styles[document.getElementById('map-style').value];
         baseLayer.clearLayers();
         labelsLayer.clearLayers();
-
-        L.tileLayer(styles[selected].base).addTo(baseLayer);
-        L.tileLayer(styles[selected].labels, {
-            pane: 'labelsPane',
-            className: styles[selected].class
-        }).addTo(labelsLayer);
+        
+        L.tileLayer(s.base).addTo(baseLayer);
+        L.tileLayer(s.labels, { pane: 'labelsPane', className: s.class }).addTo(labelsLayer);
+        
+        // Aggiorna colore comuni se già caricati
+        comuniLayer.eachLayer(layer => {
+            layer.setStyle({ color: s.comuni });
+        });
     }
 
+    // Caricamento file QGIS
+    async function loadComuni() {
+        try {
+            const response = await fetch('data/comuni_veneto.json');
+            const data = await response.json();
+            const s = styles[document.getElementById('map-style').value];
+            
+            L.geoJson(data, {
+                pane: 'comuniPane',
+                style: {
+                    color: s.comuni,
+                    weight: 0.6,
+                    fillOpacity: 0
+                }
+            }).addTo(comuniLayer);
+        } catch (e) { console.error("Errore file comuni:", e); }
+    }
+
+    // Funzione Colori Radar
     function getColor(d) {
-        return d > 80 ? '#4a0000' : d > 60 ? '#ff0000' : d > 40 ? '#ff8c00' : 
-               d > 25 ? '#ffd700' : d > 15 ? '#adff2f' : d > 7 ? '#00ff00' : 
-               d > 3  ? '#1e90ff' : d > 0.5 ? '#3939b3' : d > 0.1 ? '#6e6eb8' : 'transparent';
-    }
-
-    function styleRadar(feature) {
-        return {
-            fillColor: getColor(feature.properties.mm),
-            color: getColor(feature.properties.mm),
-            weight: 0.0, fillOpacity: 0.5, pane: 'radarPane'
-        };
+        return d > 60 ? '#ff0000' : d > 30 ? '#ffae00' : d > 10 ? '#00ff00' : d > 0.5 ? '#1e90ff' : 'transparent';
     }
 
     async function forceUpdate() {
-        const btn = document.getElementById('refresh-btn');
         const icon = document.getElementById('btn-icon');
         icon.classList.add('spinning');
-        
         try {
-            const timestamp = new Date().getTime();
-            const response = await fetch(`data/pioggia_veneto.json?t=${timestamp}`);
-            const data = await response.json();
-            
+            const r = await fetch(`data/pioggia_veneto.json?t=${new Date().getTime()}`);
+            const data = await r.json();
             radarLayerGroup.clearLayers();
             L.geoJson(data, {
-                style: styleRadar,
-                onEachFeature: (f, l) => l.bindPopup(`<b>Pioggia:</b> ${f.properties.mm} mm`)
+                pane: 'radarPane',
+                style: (f) => ({ fillColor: getColor(f.properties.mm), color: getColor(f.properties.mm), weight: 0.5, fillOpacity: 0.5 }),
+                onEachFeature: (f, l) => l.bindPopup(`Comune: ${f.properties.name || 'N/D'}<br>Pioggia: ${f.properties.mm} mm`)
             }).addTo(radarLayerGroup);
-
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
         } catch (e) { console.error(e); }
-        
         setTimeout(() => icon.classList.remove('spinning'), 1000);
     }
 
-    // Legenda
-    var legend = L.control({position: 'bottomright'});
-    legend.onAdd = function() {
-        var div = L.DomUtil.create('div', 'legend'),
-            grades = [0.1, 3, 15, 40, 80];
-        div.innerHTML = '<strong>mm/24h</strong><br>';
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML += '<i style="background:' + getColor(grades[i] + 0.1) + '"></i> ' + grades[i] + (grades[i+1] ? '+' : '++') + '<br>';
-        }
-        return div;
-    };
-    legend.addTo(map);
-
-    // Init
+    // Esecuzione
     changeStyle();
+    loadComuni();
     forceUpdate();
     setInterval(forceUpdate, 300000);
 </script>
