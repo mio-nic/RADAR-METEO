@@ -95,7 +95,7 @@
                 pane: 'comuniPane',
                 style: {
                     color: s.comuni,
-                    weight: 0.6,
+                    weight: 1,
                     fillOpacity: 0
                 }
             }).addTo(comuniLayer);
@@ -116,7 +116,7 @@
             radarLayerGroup.clearLayers();
             L.geoJson(data, {
                 pane: 'radarPane',
-                style: (f) => ({ fillColor: getColor(f.properties.mm), color: getColor(f.properties.mm), weight: 0.5, fillOpacity: 0.5 }),
+                style: (f) => ({ fillColor: getColor(f.properties.mm), color: getColor(f.properties.mm), weight: 0.0, fillOpacity: 0.5 }),
                 onEachFeature: (f, l) => l.bindPopup(`Comune: ${f.properties.name || 'N/D'}<br>Pioggia: ${f.properties.mm} mm`)
             }).addTo(radarLayerGroup);
             document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
