@@ -103,6 +103,19 @@
                d > 10 ? '#00ff00' : d > 2  ? '#1e90ff' : d > 0.1 ? '#3939b3' : 'transparent';
     }
 
+    async function loadComuni() {
+        try {
+            const response = await fetch('data/muson_metrico.json');
+            const data = await response.json();
+            const s = styles[document.getElementById('map-style').value];
+            L.geoJson(data, {
+                pane: 'comuniPane',
+                interactive: false, // DISATTIVA CLICK SUI COMUNI
+                style: { color: s.comuni, weight: 3, fillOpacity: 0 }
+            }).addTo(comuniLayer);
+        } catch (e) { console.error("Errore file muson:", e); }
+    }
+
     async function forceUpdate() {
         const icon = document.getElementById('btn-icon');
         icon.classList.add('spinning');
