@@ -242,6 +242,51 @@
     loadRadarData();
     setInterval(loadRadarData, 300000); // Aggiorna ogni 5 minuti
 
+    // Variabile globale per gestire il layer
+var radarLayer; 
+
+async function manualUpdate() {
+    const btn = document.getElementById('refresh-btn');
+    const icon = document.getElementById('btn-icon');
+    
+    // Attiva animazione
+    icon.classList.add('spinning');
+    btn.style.opacity = "0.7";
+
+    try {
+        // Il trucco del "t=" serve a saltare la cache di GitHub
+        const cacheBuster = new Date().getTime();
+        const response = await fetch(`data/pioggia_veneto.json?t=${cacheBuster}`);
+        const data = await response.json();
+
+        // Rimuove il vecchio radar se esiste
+        if (radarLayer) {
+            map.removeLayer(radarLayer);
+        }
+
+        // Aggiunge i nuovi dati
+        radarLayer = L.geoJson(data, {
+            style: style,
+            pane: 'radarPane'
+        }).addTo(map);
+
+        document.getElementById('update-time').innerText = "LIVE: " + new Date().toLocaleTimeString();
+        
+        // Feedback successo
+        btn.style.borderColor = "#00ff00";
+        setTimeout(() => { 
+            btn.style.borderColor = "#00d9ff"; 
+            icon.classList.remove('spinning');
+            btn.style.opacity = "1";
+        }, 1000);
+
+    } catch (error) {
+        console.error("Errore:", error);
+        alert("Errore durante il recupero dei dati PC");
+        icon.classList.remove('spinning');
+    }
+}
+
 </script>
 
 </body>
