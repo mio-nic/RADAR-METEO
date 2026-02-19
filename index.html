@@ -51,6 +51,7 @@
     map.createPane('radarPane').style.zIndex = 400;
     map.createPane('comuniPane').style.zIndex = 500;
     map.createPane('labelsPane').style.zIndex = 650;
+    map.createPane('musonPane').style.zIndex = 700;
 
     // BLOCCARE I CLICK SUI LAYER CHE NON DEVONO AVERE POPUP
     map.getPane('labelsPane').style.pointerEvents = 'none';
@@ -60,6 +61,7 @@
     var labelsLayer = L.layerGroup().addTo(map);
     var radarLayerGroup = L.layerGroup().addTo(map);
     var comuniLayer = L.layerGroup().addTo(map);
+    var musonLayer = L.layerGroup().addTo(map);
 
     const styles = {
         dark: {
@@ -103,7 +105,7 @@
                d > 10 ? '#00ff00' : d > 2  ? '#1e90ff' : d > 0.1 ? '#3939b3' : 'transparent';
     }
 
-    async function loadComuni() {
+    async function loadmuson() {
         try {
             const response = await fetch('data/muson_metrico.json');
             const data = await response.json();
